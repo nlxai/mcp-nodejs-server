@@ -19,13 +19,20 @@ jobs:
 
     steps:
       - name: Debug NPM Token
-        run: echo "NPM_TOKEN is set"
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN is not set. Exiting."
+            exit 1
+          else
+            echo "NPM_TOKEN is set."
+          fi
         env:
           NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
       - name: Verify NPM Token
         env:
           NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
         run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           if [ "$(npm whoami --registry=https://registry.npmjs.org/)" == "" ]; then
             echo "Authentication failed. Exiting."
             exit 1
