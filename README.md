@@ -79,3 +79,9 @@ Semantic Release uses the Angular commit message conventions. Here is a brief ov
 To create a new release, simply push your changes to the `main` branch. The CI/CD pipeline will automatically run semantic-release to determine the next version number, update the changelog, and publish the release.
 
 Ensure your commit messages follow the Angular conventions to trigger the correct version updates.
+
+In dire cicd situations, you can manually trigger a release by running the following command:
+
+```bash
+npx semantic-release --no-ci
+```
