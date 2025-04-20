@@ -7,7 +7,7 @@
   "homepage": "https://nlx.ai",
   "type": "module",
   "bin": {
-    "nlx-mcp-nodejs-server": "dist/index.js"
+    "mcp-nodejs-server": "dist/index.js"
   },
   "files": [
     "dist"
