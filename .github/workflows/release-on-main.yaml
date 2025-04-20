@@ -18,6 +18,16 @@ jobs:
       id-token: write # to enable use of OIDC for npm provenance
 
     steps:
+      - name: Debug NPM Token
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN is not set. Exiting."
+            exit 1
+          else
+            echo "NPM_TOKEN is set."
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
       - name: Verify NPM Token
         env:
           NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
