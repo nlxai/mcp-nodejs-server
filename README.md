@@ -38,7 +38,7 @@ This project is a Node.js server implementation for the Model Context Protocol (
 To start the server, run the following command:
 
 ```bash
-node src/index.ts
+npm run start
 ```
 
 The server will start and listen for requests via standard input/output.
