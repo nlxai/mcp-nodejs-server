@@ -32,6 +32,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
         run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           if [ "$(npm whoami --registry=https://registry.npmjs.org/)" == "" ]; then
             echo "Authentication failed. Exiting."
             exit 1
