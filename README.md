@@ -54,3 +54,28 @@ The server will start and listen for requests via standard input/output.
 
 - **Cannot find module**: Verify that the module paths are correct and that the modules are installed.
 - **Implicit 'any' type**: Consider adding TypeScript type definitions to avoid implicit 'any' types.
+
+## Release Management
+
+### Automated Releases with Semantic Release
+
+This project uses [semantic-release](https://semantic-release.gitbook.io/semantic-release/) to automate the versioning and release process. Semantic Release ensures that the version number and changelog are automatically updated based on the commit messages.
+
+#### Commit Message Format
+
+Semantic Release uses the Angular commit message conventions. Here is a brief overview of the format:
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing or correcting existing tests
+- **chore**: Changes to the build process or auxiliary tools and libraries such as documentation generation
+
+#### How to Release
+
+To create a new release, simply push your changes to the `main` branch. The CI/CD pipeline will automatically run semantic-release to determine the next version number, update the changelog, and publish the release.
+
+Ensure your commit messages follow the Angular conventions to trigger the correct version updates.
