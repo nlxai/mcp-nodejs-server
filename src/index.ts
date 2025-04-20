@@ -4,8 +4,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema,
-  ToolSchema,
+  ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 
 const NLX_APP_URL = process.env.NLX_APP_URL || "";

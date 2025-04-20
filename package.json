@@ -15,6 +15,7 @@
   "scripts": {
     "start": "npm run build && node ./dist/index.js",
     "build": "tsc && shx chmod +x dist/*.js",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "prepare": "npm run build",
     "watch": "tsc --watch"
   },
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
     "@types/node": "^22",
+    "@modelcontextprotocol/inspector": "^0.4.1",
     "shx": "^0.3.4",
     "typescript": "^5.3.3",
     "semantic-release": "^19.0.0",
