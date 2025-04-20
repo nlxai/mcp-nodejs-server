@@ -14,22 +14,22 @@ const NLX_API_KEY = process.env.NLX_API_KEY || "";
 const server = new Server(
   {
     name: "nlx-mcp-nodejs-server",
-    version: "0.1.0",
+    version: "0.1.0"
   },
   {
     capabilities: {
-      tools: {},
-    },
-  },
-);;
+      tools: {}
+    }
+  }
+);
 
 // Tool handlers
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   const appUrl = `${NLX_APP_URL}/tools`;
   const response = await fetch(appUrl, {
-  	headers: {
-  		"nlx-api-key": NLX_API_KEY
-  	}
+    headers: {
+      "nlx-api-key": NLX_API_KEY
+    }
   });
 
   if (!response.ok) {
@@ -39,43 +39,45 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   const json = await response.json();
 
   if (!json) {
-    throw new Error(`NLX MCP request failed. Please check you have a valid application URL and API key`);
+    throw new Error(
+      `NLX MCP request failed. Please check you have a valid application URL and API key`
+    );
   }
-  
+
   return json;
 });
-
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   // call a specific tool (powered by an NLX flow) given the application URL, a tool name, and parameters
   try {
     const { name, arguments: args } = request.params;
     const appUrl = `${NLX_APP_URL}/tools/${name}`;
-	  const response = await fetch(appUrl, 
-	  	{
-	  		method: "POST",
-	  		headers: {
-		  		"nlx-api-key": NLX_API_KEY
-		  	},
-	  		body: { ...args }
-	  	});
+    const response = await fetch(appUrl, {
+      method: "POST",
+      headers: {
+        "nlx-api-key": NLX_API_KEY
+      },
+      body: JSON.stringify({ ...args })
+    });
 
-	  if (!response.ok) {
-	    throw new Error(`Response status: ${response.status}`);
-	  }
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
 
-	  const json = await response.json();
+    const json = await response.json();
 
-	  if (!json) {
-	    throw new Error(`NLX MCP request failed. Please check you have a valid application URL and API key`);
-	  }
-	  
-	  return json;
+    if (!json) {
+      throw new Error(
+        `NLX MCP request failed. Please check you have a valid application URL and API key`
+      );
+    }
+
+    return json;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       content: [{ type: "text", text: `Error: ${errorMessage}` }],
-      isError: true,
+      isError: true
     };
   }
 });
