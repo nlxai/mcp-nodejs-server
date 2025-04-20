@@ -8,7 +8,7 @@ This project is a Node.js server implementation for the Model Context Protocol (
 
 ### Prerequisites
 
-- Node.js (version 14 or later)
+- Node.js (version 18 or later)
 - npm (Node Package Manager)
 
 ### Installation
