@@ -57,7 +57,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	  		headers: {
 		  		"nlx-api-key": NLX_API_KEY
 		  	},
-	  		body: JSON.stringify({ ...args })
+	  		body: { ...args }
 	  	});
 
 	  if (!response.ok) {
