@@ -12,11 +12,21 @@ jobs:
     name: Create Git Tag, GitHub Release, and Publish to npm
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed for pushing tags and creating releases
-      id-token: write # Needed for npm provenance
-      packages: write
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+      id-token: write # to enable use of OIDC for npm provenance
 
     steps:
+      - name: Verify NPM Token
+        env:
+          NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
+        run: |
+          if [ "$(npm whoami --registry=https://registry.npmjs.org/)" == "" ]; then
+            echo "Authentication failed. Exiting."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -30,11 +40,6 @@ jobs:
         run: npm ci
         env:
           NODE_ENV: development
-
-      - name: Run tests
-        run: npm test
-        # Temporary: skip tests for now
-        continue-on-error: true
 
       # Optional: build if needed (for TypeScript, bundlers, etc.)
       - name: Build package
@@ -53,4 +58,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NLXAI_NPM_TOKEN }}
-        run: semantic-release
+        run: npx semantic-release
