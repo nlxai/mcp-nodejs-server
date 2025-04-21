@@ -4,6 +4,32 @@
 
 This project is a Node.js server implementation for the Model Context Protocol (MCP) using the NLX framework. It provides a server that can handle tool requests and communicate with an NLX application via API calls.
 
+## Configuration
+
+### Claude Desktop
+
+1. Open your Claude Desktop configuration:
+
+   ```
+   open ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   ```
+
+2. Add the NLX Application configuration:
+   ```json
+   {
+     "mcpServers": {
+       "nlx": {
+         "command": "npx",
+         "args": ["-y", "@nlxai/mcp-nodejs-server"],
+         "env": {
+           "NLX_API_KEY": "",
+           "NLX_APP_URL": ""
+         }
+       }
+     }
+   }
+   ```
+
 ## Setup
 
 ### Prerequisites
