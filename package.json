@@ -1,29 +1,55 @@
 {
-  "name": "nlx-mcp-nodejs-server",
-  "version": "0.1.0",
+  "name": "@nlxai/mcp-nodejs-server",
+  "version": "1.2.0",
   "description": "MCP server for NLX applications",
   "license": "MIT",
   "author": "NLX Inc.",
   "homepage": "https://nlx.ai",
   "type": "module",
   "bin": {
-    "nlx-mcp-nodejs-server": "dist/index.js"
+    "@nlxai/mcp-nodejs-server": "dist/index.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
+    "start": "npm run build && node ./dist/index.js",
     "build": "tsc && shx chmod +x dist/*.js",
+    "inspector": "npx @modelcontextprotocol/inspector",
     "prepare": "npm run build",
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "0.5.0"
+    "@modelcontextprotocol/sdk": "^1.10.1"
   },
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.10.2",
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/npm": "^12.0.1",
     "@types/minimatch": "^5.1.2",
     "@types/node": "^22",
-    "shx": "^0.3.4",
+    "semantic-release": "^24.2.3",
+    "shx": "^0.4.0",
     "typescript": "^5.3.3"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "angular"
+        }
+      ],
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/npm"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
