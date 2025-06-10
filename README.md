@@ -23,7 +23,7 @@ This project is a Node.js server implementation for the Model Context Protocol (
          "args": ["-y", "@nlxai/mcp-nodejs-server"],
          "env": {
            "NLX_API_KEY": "",
-           "NLX_APP_URL": ""
+           "NLX_MCP_URL": ""
          }
        }
      }
@@ -56,7 +56,7 @@ This project is a Node.js server implementation for the Model Context Protocol (
 
 ### Environment Variables
 
-- `NLX_APP_URL`: The base URL of your NLX application.
+- `NLX_MCP_URL`: The base URL of your NLX application.
 - `NLX_API_KEY`: The API key for authenticating requests to your NLX application.
 
 ### Running the Server
@@ -74,7 +74,7 @@ The server will start and listen for requests via standard input/output.
 ### Common Issues
 
 - **Module Not Found Errors**: Ensure that all dependencies are correctly installed and that the paths in the import statements are correct.
-- **Environment Variables**: Make sure that `NLX_APP_URL` and `NLX_API_KEY` are set correctly in your environment.
+- **Environment Variables**: Make sure that `NLX_MCP_URL` and `NLX_API_KEY` are set correctly in your environment.
 
 ### Linter Errors
 
