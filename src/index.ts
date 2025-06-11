@@ -7,7 +7,10 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 
-const NLX_APP_URL = process.env.NLX_MCP_URL || process.env.NLX_APP_URL || "";
+if (!process.env.NLX_MCP_URL && process.env.NLX_APP_URL) {
+  console.warn("The NLX_APP_URL environment variable is deprecated and will be removed in a later version of the package. Use NLX_MCP_URL instead.");
+}
+const NLX_APP_URL = process.env.NLX_MCP_URL ?? process.env.NLX_APP_URL ?? "";
 const NLX_API_KEY = process.env.NLX_API_KEY || "";
 
 try {
