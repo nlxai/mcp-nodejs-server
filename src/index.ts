@@ -11,7 +11,11 @@ const NLX_APP_URL = process.env.NLX_APP_URL || "";
 const NLX_API_KEY = process.env.NLX_API_KEY || "";
 
 // Handle streaming SSE response from NLX API
-async function handleStreamingResponse(response: Response, sendNotification?: (notification: any) => Promise<void>) {
+async function handleStreamingResponse(
+  response: Response, 
+  sendNotification?: (notification: any) => Promise<void>,
+  progressToken?: string | number
+) {
   if (!response.body) {
     throw new Error("No response body for streaming");
   }
@@ -20,8 +24,24 @@ async function handleStreamingResponse(response: Response, sendNotification?: (n
   const decoder = new TextDecoder();
   let buffer = "";
   let finalResult: any = null;
+  let eventCount = 0;
 
   try {
+    // Send initial notification that streaming started
+    if (sendNotification) {
+      await sendNotification({
+        method: "notifications/message",
+        params: {
+          level: "info",
+          data: {
+            type: "stream_start",
+            message: "Starting to process streaming response",
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+    }
+
     while (true) {
       const { done, value } = await reader.read();
       
@@ -41,6 +61,8 @@ async function handleStreamingResponse(response: Response, sendNotification?: (n
         
         const event = parseSSEEvent(eventData);
         if (event) {
+          eventCount++;
+          
           // Send streaming data as MCP notification
           if (sendNotification && event.data) {
             try {
@@ -53,20 +75,74 @@ async function handleStreamingResponse(response: Response, sendNotification?: (n
                 parsedData = event.data;
               }
 
-              await sendNotification({
-                method: "notifications/message",
-                params: {
-                  level: "info",
-                  data: parsedData
-                }
-              });
+              // Determine notification type based on event type
+              if (event.event === "progress" && progressToken) {
+                // Send progress notification if we have a progress token
+                await sendNotification({
+                  method: "notifications/progress",
+                  params: {
+                    progressToken,
+                    progress: parsedData.progress || eventCount,
+                    total: parsedData.total,
+                    message: parsedData.message || `Event ${eventCount}`
+                  }
+                });
+              } else if (event.event === "error") {
+                // Send error notification
+                await sendNotification({
+                  method: "notifications/message",
+                  params: {
+                    level: "error",
+                    data: {
+                      type: "stream_error",
+                      error: parsedData,
+                      timestamp: new Date().toISOString()
+                    }
+                  }
+                });
+              } else {
+                // Send general message notification
+                await sendNotification({
+                  method: "notifications/message",
+                  params: {
+                    level: "info",
+                    data: {
+                      type: "stream_data",
+                      eventType: event.event || "data",
+                      content: parsedData,
+                      eventId: event.id,
+                      timestamp: new Date().toISOString()
+                    }
+                  }
+                });
+              }
             } catch (notificationError) {
               console.error("Error sending notification:", notificationError);
+              // Send error notification about the notification failure
+              if (sendNotification) {
+                try {
+                  await sendNotification({
+                    method: "notifications/message",
+                    params: {
+                      level: "warning",
+                      data: {
+                        type: "notification_error",
+                        error: "Failed to parse streaming event",
+                        rawEvent: event.data,
+                        timestamp: new Date().toISOString()
+                      }
+                    }
+                  });
+                } catch {
+                  // If we can't even send the error notification, just log it
+                  console.error("Failed to send error notification");
+                }
+              }
             }
           }
 
           // Check if this is the final result
-          if (event.event === "done" || event.event === "complete") {
+          if (event.event === "done" || event.event === "complete" || event.event === "end") {
             try {
               finalResult = event.data ? JSON.parse(event.data) : null;
             } catch {
@@ -77,12 +153,46 @@ async function handleStreamingResponse(response: Response, sendNotification?: (n
       }
     }
 
+    // Send completion notification
+    if (sendNotification) {
+      await sendNotification({
+        method: "notifications/message",
+        params: {
+          level: "info",
+          data: {
+            type: "stream_complete",
+            message: `Stream completed successfully. Processed ${eventCount} events.`,
+            eventCount,
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+    }
+
     // Return final result or default success response
     return finalResult || {
-      content: [{ type: "text", text: "Stream completed successfully" }]
+      content: [{ type: "text", text: `Stream completed successfully. Processed ${eventCount} events.` }]
     };
 
   } catch (error) {
+    // Send error notification if possible
+    if (sendNotification) {
+      try {
+        await sendNotification({
+          method: "notifications/message",
+          params: {
+            level: "error",
+            data: {
+              type: "stream_error",
+              error: error instanceof Error ? error.message : String(error),
+              timestamp: new Date().toISOString()
+            }
+          }
+        });
+      } catch {
+        console.error("Failed to send error notification");
+      }
+    }
     throw new Error(`Streaming error: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
     reader.releaseLock();
@@ -126,7 +236,11 @@ try {
     },
     {
       capabilities: {
-        tools: {}
+        tools: {},
+        notifications: {
+          message: true,
+          progress: true
+        }
       }
     }
   );
@@ -158,8 +272,9 @@ try {
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     // call a specific tool (powered by an NLX flow) given the application URL, a tool name, and parameters
     try {
-      const { name, arguments: args } = request.params;
+      const { name, arguments: args, _meta } = request.params;
       const appUrl = `${NLX_APP_URL}/tools/${name}`;
+      const progressToken = _meta?.progressToken;
       
       // Add Accept header to request SSE streaming if supported
       const response = await fetch(appUrl, {
@@ -169,10 +284,30 @@ try {
           "Accept": "text/event-stream, application/json",
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ ...args })
+        body: JSON.stringify({ ...args, _meta })
       });
 
       if (!response.ok) {
+        // Send error notification if we have sendNotification available
+        if (extra?.sendNotification) {
+          try {
+            await extra.sendNotification({
+              method: "notifications/message",
+              params: {
+                level: "error",
+                data: {
+                  type: "http_error",
+                  status: response.status,
+                  statusText: response.statusText,
+                  url: appUrl,
+                  timestamp: new Date().toISOString()
+                }
+              }
+            });
+          } catch {
+            // Ignore notification errors
+          }
+        }
         throw new Error(`Response status: ${response.status}`);
       }
 
@@ -180,7 +315,7 @@ try {
       
       // Check if response is SSE stream
       if (contentType.includes("text/event-stream")) {
-        return await handleStreamingResponse(response, extra?.sendNotification);
+        return await handleStreamingResponse(response, extra?.sendNotification, progressToken);
       } else {
         // Handle regular JSON response
         const json = await response.json();
@@ -189,11 +324,51 @@ try {
             `NLX MCP request failed. Please check you have a valid application URL and API key`
           );
         }
+        
+        // Send notification for successful non-streaming response
+        if (extra?.sendNotification) {
+          try {
+            await extra.sendNotification({
+              method: "notifications/message",
+              params: {
+                level: "info",
+                data: {
+                  type: "tool_complete",
+                  toolName: name,
+                  message: "Tool executed successfully (non-streaming)",
+                  timestamp: new Date().toISOString()
+                }
+              }
+            });
+          } catch {
+            // Ignore notification errors
+          }
+        }
+        
         return json;
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Send error notification if available
+      if (extra?.sendNotification) {
+        try {
+          await extra.sendNotification({
+            method: "notifications/message",
+            params: {
+              level: "error",
+              data: {
+                type: "tool_error",
+                error: errorMessage,
+                timestamp: new Date().toISOString()
+              }
+            }
+          });
+        } catch {
+          // Ignore notification errors
+        }
+      }
+      
       return {
         content: [{ type: "text", text: `Error: ${errorMessage}` }],
         isError: true
